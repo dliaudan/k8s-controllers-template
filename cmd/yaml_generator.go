@@ -200,6 +200,17 @@ var generatePodYaml = &cobra.Command{
 			outputFile, _ = cmd.Flags().GetString("output")
 		}
 
+		// If no env file was used, get values directly from command line flags
+		if envFile == "" {
+			podName, _ = cmd.Flags().GetString("pod-name")
+			containerName, _ = cmd.Flags().GetString("container-name")
+			image, _ = cmd.Flags().GetString("image")
+			tag, _ = cmd.Flags().GetString("tag")
+			port, _ = cmd.Flags().GetInt("port")
+			namespace, _ = cmd.Flags().GetString("namespace")
+			configMapName, _ = cmd.Flags().GetString("configmap")
+		}
+
 		// Set log level based on verbose flag BEFORE any debug logging
 		if verbose {
 			zerolog.SetGlobalLevel(zerolog.DebugLevel)
