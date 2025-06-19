@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -60,7 +61,7 @@ var generatePodYaml = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info().Msg("Starting YAML generation for Pod")
 
-		// Get flag values from Cobra
+		// Get flag values using Cobra (which uses pflag under the hood)
 		podName, _ := cmd.Flags().GetString("pod-name")
 		containerName, _ := cmd.Flags().GetString("container-name")
 		image, _ := cmd.Flags().GetString("image")
@@ -69,6 +70,27 @@ var generatePodYaml = &cobra.Command{
 		namespace, _ := cmd.Flags().GetString("namespace")
 		configMapName, _ := cmd.Flags().GetString("configmap")
 		outputFile, _ := cmd.Flags().GetString("output")
+		verbose, _ := cmd.Flags().GetBool("verbose")
+
+		// Set log level based on verbose flag
+		if verbose {
+			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+			log.Debug().Msg("Verbose logging enabled - showing detailed information")
+		} else {
+			zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		}
+
+		log.Debug().
+			Str("pod_name", podName).
+			Str("container_name", containerName).
+			Str("image", image).
+			Str("tag", tag).
+			Int("port", port).
+			Str("namespace", namespace).
+			Str("configmap", configMapName).
+			Str("output_file", outputFile).
+			Bool("verbose", verbose).
+			Msg("Parsed all command line flags")
 
 		// Validate required parameters
 		if podName == "" || containerName == "" || image == "" || tag == "" || port == 0 {
@@ -78,8 +100,11 @@ var generatePodYaml = &cobra.Command{
 			return
 		}
 
+		log.Debug().Msg("All required parameters validated successfully")
+
 		// Create full image name
 		fullImage := fmt.Sprintf("%s:%s", image, tag)
+		log.Debug().Str("full_image", fullImage).Msg("Constructed full image name")
 
 		log.Info().
 			Str("pod_name", podName).
@@ -91,6 +116,7 @@ var generatePodYaml = &cobra.Command{
 			Msg("Generating Pod YAML")
 
 		// Create Pod specification
+		log.Debug().Msg("Creating Pod specification structure")
 		pod := PodSpec{
 			APIVersion: "v1",
 			Kind:       "Pod",
@@ -117,8 +143,17 @@ var generatePodYaml = &cobra.Command{
 			},
 		}
 
+		log.Debug().
+			Str("api_version", pod.APIVersion).
+			Str("kind", pod.Kind).
+			Str("namespace", pod.Metadata.Namespace).
+			Int("containers_count", len(pod.Spec.Containers)).
+			Msg("Pod specification created")
+
 		// Add ConfigMap if specified
 		if configMapName != "" {
+			log.Debug().Str("configmap_name", configMapName).Msg("Adding ConfigMap volume to Pod")
+
 			pod.Spec.Volumes = []Volume{
 				{
 					Name: "config-volume",
@@ -134,17 +169,27 @@ var generatePodYaml = &cobra.Command{
 					MountPath: "/etc/config",
 				},
 			}
+
+			log.Debug().
+				Str("volume_name", "config-volume").
+				Str("mount_path", "/etc/config").
+				Msg("ConfigMap volume and mount configured")
+		} else {
+			log.Debug().Msg("No ConfigMap specified - skipping volume configuration")
 		}
 
 		// Serialize to YAML
+		log.Debug().Msg("Starting YAML serialization")
 		yamlData, err := yaml.Marshal(pod)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to marshal YAML")
 			return
 		}
+		log.Debug().Int("yaml_size", len(yamlData)).Msg("YAML serialization completed")
 
 		// Write to file or output to stdout
 		if outputFile != "" {
+			log.Debug().Str("output_file", outputFile).Msg("Writing YAML to file")
 			err = os.WriteFile(outputFile, yamlData, 0644)
 			if err != nil {
 				log.Error().Err(err).Str("file", outputFile).Msg("Failed to write YAML file")
@@ -153,10 +198,12 @@ var generatePodYaml = &cobra.Command{
 			log.Info().Str("file", outputFile).Msg("YAML file generated successfully")
 			fmt.Printf("YAML file generated: %s\n", outputFile)
 		} else {
+			log.Debug().Msg("Outputting YAML to stdout")
 			fmt.Println("---")
 			fmt.Println(string(yamlData))
 		}
 
+		log.Debug().Msg("Pod YAML generation process completed")
 		log.Info().Msg("Pod YAML generation completed successfully")
 	},
 }
@@ -164,7 +211,7 @@ var generatePodYaml = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(generatePodYaml)
 
-	// Add flags for YAML generation using Cobra (which uses pflag under the hood)
+	// Add flags for YAML generation using pflag
 	generatePodYaml.Flags().String("pod-name", "", "Pod name (required)")
 	generatePodYaml.Flags().String("container-name", "", "Container name (required)")
 	generatePodYaml.Flags().String("image", "", "Container image (required)")
@@ -173,4 +220,5 @@ func init() {
 	generatePodYaml.Flags().String("namespace", "default", "Kubernetes namespace")
 	generatePodYaml.Flags().String("configmap", "", "ConfigMap name (optional)")
 	generatePodYaml.Flags().String("output", "", "Output file path (optional, defaults to stdout)")
+	generatePodYaml.Flags().Bool("verbose", false, "Enable verbose logging")
 }
