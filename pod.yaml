@@ -12,3 +12,10 @@ spec:
           ports:
             - containerPort: 30555
               protocol: TCP
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+    volumes:
+        - name: config-volume
+          configMap:
+            name: redis-config
