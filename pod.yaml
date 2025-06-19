@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+    name: redis-master
+    namespace: databases
+    labels:
+        app: redis-master
+spec:
+    containers:
+        - name: redis
+          image: redis:1.2.3
+          ports:
+            - containerPort: 30555
+              protocol: TCP
