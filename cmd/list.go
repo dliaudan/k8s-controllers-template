@@ -89,7 +89,14 @@ func listDeployments() error {
 
 	// Print results
 	fmt.Printf("Deployments in namespace '%s':\n", namespace)
-	fmt.Println("NAME\t\tREADY\tUP-TO-DATE\tAVAILABLE\tAGE")
+
+	if len(deployments.Items) == 0 {
+		fmt.Println("No deployments found.")
+		return nil
+	}
+
+	// Print header
+	fmt.Printf("%-40s %-10s %-12s %-12s %-8s\n", "NAME", "READY", "UP-TO-DATE", "AVAILABLE", "AGE")
 
 	for _, deployment := range deployments.Items {
 		// Handle nil replicas
@@ -117,12 +124,14 @@ func listDeployments() error {
 			}
 		}
 
-		fmt.Printf("%s\t\t%s\t%s\t\t%s\t\t%s\n",
-			deployment.Name, ready, upToDate, available, age)
-	}
+		// Truncate name if too long
+		name := deployment.Name
+		if len(name) > 39 {
+			name = name[:36] + "..."
+		}
 
-	if len(deployments.Items) == 0 {
-		fmt.Println("No deployments found.")
+		fmt.Printf("%-40s %-10s %-12s %-12s %-8s\n",
+			name, ready, upToDate, available, age)
 	}
 
 	return nil
