@@ -11,7 +11,7 @@ import (
 
 var serverPort int
 
-var serverCmd = &cobra.Command{
+var ServerCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Start a FastHTTP server",
 	Long: `Start a FastHTTP server that can handle HTTP requests.
@@ -49,6 +49,6 @@ for serving API endpoints or web content.`,
 }
 
 func init() {
-	rootCmd.AddCommand(serverCmd)
-	serverCmd.Flags().IntVar(&serverPort, "port", 8080, "Port to run the server on")
+	rootCmd.AddCommand(ServerCmd)
+	ServerCmd.Flags().IntVar(&serverPort, "port", 8080, "Port to run the server on")
 }
