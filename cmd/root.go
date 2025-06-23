@@ -11,6 +11,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Variables for build-time injection
+var (
+	appVersion = "dev"
+	buildDate  = "unknown"
+	commitSHA  = "unknown"
+)
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "k8s-controller-cli",
