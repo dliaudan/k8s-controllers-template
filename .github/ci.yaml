@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "feature/**", "step-*" ]
+    branches: [ "main", "feature/**", "Step-*" ]
     paths:
       - '**.go'
       - '**.mod'
